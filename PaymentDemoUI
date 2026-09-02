@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Pay - Advanced Finance Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 flex flex-col items-center justify-center min-h-screen p-4 font-sans text-slate-800">
+
+  <div class="w-full max-w-sm bg-slate-800 text-white p-2.5 rounded-2xl mb-3 text-xs border border-slate-700 shadow-lg flex flex-col gap-2">
+    <div class="flex justify-between items-center">
+      <span class="font-bold text-slate-300 ml-1"><i class="fa-solid fa-user text-emerald-400 mr-1"></i> User:</span>
+      <select id="userSelector" onchange="switchUser(this.value)" class="bg-slate-700 text-white font-bold text-xs px-2 py-1 rounded-lg focus:outline-none border border-slate-600">
+        <option value="user_1" selected>Kamal Singh Bisht</option>
+        <option value="user_2">User1</option>
+        <option value="user_3">User2</option>
+      </select>
+    </div>
+    <div class="flex justify-between items-center border-t border-slate-700 pt-2">
+      <span class="font-bold text-slate-300 ml-1"><i class="fa-solid fa-mobile-screen text-blue-400 mr-1"></i> Screen:</span>
+      <div class="flex gap-1">
+        <button onclick="switchView('hub')" id="tabHub" class="bg-blue-600 px-3 py-1 rounded-lg font-semibold transition">1. Finance Hub</button>
+        <button onclick="switchView('checkout')" id="tabCheckout" class="bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded-lg font-semibold transition">2. UPI Checkout</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="w-full max-w-sm bg-slate-800 text-white p-3 rounded-2xl mb-4 text-xs border border-slate-700 shadow-lg">
+    <div class="font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center justify-between">
+      <span><i class="fa-solid fa-qrcode text-emerald-400 mr-1"></i> QR Scan Simulation</span>
+      <span class="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-300">MCC Range Engine</span>
+    </div>
+    <div class="grid grid-cols-2 gap-2">
+      <button onclick="simulateScan('Starbucks', 'starbucks@icici', '5811', 350)" class="bg-slate-700 hover:bg-slate-600 p-2 rounded-lg text-left transition border border-slate-600">
+        <div class="font-bold text-emerald-400">🍔 MCC 5811 (Caterer)</div>
+        <div class="text-[10px] text-slate-400">Range 5800-5899 ➔ Food</div>
+      </button>
+      <button onclick="simulateScan('RedBus Ticket', 'redbus@paytm', '4131', 650)" class="bg-slate-700 hover:bg-slate-600 p-2 rounded-lg text-left transition border border-slate-600">
+        <div class="font-bold text-blue-400">🚗 MCC 4131 (Bus Line)</div>
+        <div class="text-[10px] text-slate-400">Range 4000-4799 ➔ Travel</div>
+      </button>
+      <button onclick="simulateScan('Apollo Pharmacy', 'apollo@hsbc', '5912', 420)" class="bg-slate-700 hover:bg-slate-600 p-2 rounded-lg text-left transition border border-slate-600">
+        <div class="font-bold text-rose-400">💊 MCC 5912 (Chemist)</div>
+        <div class="text-[10px] text-slate-400">Specific Override ➔ Health</div>
+      </button>
+      <button onclick="simulateScan('Chai Stall', 'localtea@upi', '0000', 30)" class="bg-slate-700 hover:bg-slate-600 p-2 rounded-lg text-left transition border border-slate-600">
+        <div class="font-bold text-amber-400">☕ MCC 0000 (No Code)</div>
+        <div class="text-[10px] text-slate-400">VPA Match 'tea' ➔ Food</div>
+      </button>
+    </div>
+  </div>
+
+  <div class="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col justify-between border-4 border-slate-800" style="height: 680px;">
+    
+    <div id="viewHub" class="flex flex-col h-full justify-between">
+      
+      <div class="bg-slate-50 px-4 pt-4 pb-3 border-b border-slate-100">
+        <div class="flex justify-between items-center mb-1">
+          <span class="text-xs font-bold text-blue-600 tracking-wide uppercase"><i class="fa-brands fa-google mr-1"></i> Pay Finance</span>
+          <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold" id="statusBadge">Live User Data</span>
+        </div>
+        <div class="flex justify-between items-baseline">
+          <h1 class="text-lg font-extrabold text-slate-800">Finance Tracker</h1>
+          <span class="text-xs font-semibold text-slate-500" id="userNameDisplay">Kamal Singh Bisht</span>
+        </div>
+
+        <div class="flex items-center justify-between mt-2 bg-white p-1.5 rounded-xl border border-slate-200">
+          <span class="text-[11px] font-bold text-slate-500 pl-1">Budget Cycle:</span>
+          <select id="cycleSelector" onchange="changeCycle(this.value)" class="bg-slate-100 text-slate-800 font-bold text-xs px-2 py-1 rounded-lg focus:outline-none border border-slate-200">
+            <option value="Daily">Daily</option>
+            <option value="Weekly">Weekly</option>
+            <option value="Monthly" selected>Monthly (Default)</option>
+            <option value="Yearly">Yearly</option>
+          </select>
+        </div>
+
+        <div class="mt-3 bg-slate-200 p-1 rounded-xl flex text-xs font-bold">
+          <button id="modeBtnAlloc" onclick="setHubMode('allocation')" class="flex-1 py-1.5 rounded-lg text-slate-600 transition">
+            <i class="fa-solid fa-sliders mr-1"></i> Allocation
+          </button>
+          <button id="modeBtnAnalysis" onclick="setHubMode('analysis')" class="flex-1 py-1.5 rounded-lg bg-white text-blue-600 shadow-sm transition">
+            <i class="fa-solid fa-chart-pie mr-1"></i> Analysis View
+          </button>
+        </div>
+      </div>
+
+      <div class="px-4 py-2 overflow-y-auto flex-1" id="hubListContainer">
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-100">
+        <button onclick="switchView('checkout')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition text-sm flex items-center justify-center gap-2">
+          <span>SCAN & PAY AT STORE</span>
+          <i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+      </div>
+    </div>
+
+
+    <div id="viewCheckout" class="hidden flex-col h-full justify-between">
+      
+      <div>
+        <div class="flex justify-between items-center px-4 pt-4 pb-1">
+          <button onclick="switchView('hub')" class="text-slate-500 hover:text-slate-800"><i class="fa-solid fa-xmark text-lg"></i></button>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">UPI Payment</span>
+          <button class="text-slate-500 hover:text-slate-800"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+        </div>
+
+        <div class="flex flex-col items-center mt-1">
+          <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 text-xl font-extrabold shadow-sm" id="merchantAvatar">
+            S
+          </div>
+          <h2 class="text-base font-bold text-slate-800 mt-1 flex items-center gap-1" id="merchantName">
+            Starbucks <i class="fa-solid fa-circle-check text-blue-500 text-xs"></i>
+          </h2>
+          <p class="text-[11px] text-slate-400 font-mono" id="merchantVpa">VPA: starbucks@icici</p>
+        </div>
+
+        <div class="mt-3 px-6 text-center">
+          <div class="flex items-center justify-center text-slate-800 font-black text-3xl">
+            <span>₹</span>
+            <input type="number" id="payAmountInput" value="350" class="w-36 text-center focus:outline-none border-b-2 border-transparent focus:border-blue-500 bg-transparent" />
+          </div>
+          
+          <div class="mt-2 flex items-center justify-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-full max-w-[220px] mx-auto border border-slate-200">
+            <i class="fa-solid fa-pen text-slate-400 text-xs"></i>
+            <input type="text" id="payNoteInput" placeholder="Add a note" class="bg-transparent text-xs text-slate-700 focus:outline-none w-full text-center placeholder-slate-400" />
+          </div>
+        </div>
+      </div>
+
+      <div class="px-4 py-2">
+        <div class="flex justify-between items-center mb-1.5 px-1">
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Select Category Folder</span>
+          <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Auto-Tagged</span>
+        </div>
+
+        <div class="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none" id="checkoutPillContainer">
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-100">
+        <div class="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center justify-between shadow-sm mb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs">HDFC</div>
+            <div>
+              <p class="text-xs font-bold text-slate-800">HDFC Bank •••• 6789</p>
+              <p class="text-[10px] text-slate-400">Savings Account</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-down text-xs text-slate-400"></i>
+        </div>
+
+        <button onclick="executePayment()" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold py-3.5 rounded-xl shadow-md transition flex items-center justify-center text-sm">
+          <span>ENTER PIN & PAY</span>
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    let currentUser = 'user_1';
+    let currentCycle = 'Monthly';
+    let hubMode = 'analysis';
+    let selectedCheckoutCat = 'Food and Groceries';
+
+    const defaultCategories = () => ({
+      "Food and Groceries": { icon: '🛒', alloc: 0, spent: 0 },
+      "Travel": { icon: '🚗', alloc: 0, spent: 0 },
+      "Entertainment": { icon: '🍿', alloc: 0, spent: 0 },
+      "Bills": { icon: '⚡', alloc: 0, spent: 0 },
+      "Health": { icon: '🏥', alloc: 0, spent: 0 },
+      "General": { icon: '📦', alloc: 0, spent: 0 },
+      "Misc": { icon: '🌀', alloc: 0, spent: 0 }
+    });
+
+    const userData = {
+      user_1: {
+        name: "Kamal Singh Bisht",
+        categories: defaultCategories()
+      },
+      user_2: {
+        name: "User1",
+        categories: defaultCategories()
+      },
+      user_3: {
+        name: "User2",
+        categories: defaultCategories()
+      }
+    };
+
+    function determineCategoryByMCC(mcc, vpa) {
+      const code = parseInt(mcc, 10) || 0;
+      
+      // Specific Overrides
+      if (code === 5912) return "Health";
+      
+      // MCC Ranges
+      if (code >= 5800 && code <= 5899) return "Food and Groceries";
+      if (code >= 4000 && code <= 4799) return "Travel";
+      
+      // VPA Fallback when MCC is 0000 or unknown
+      if (vpa.includes("tea") || vpa.includes("food") || vpa.includes("cafe")) {
+        return "Food and Groceries";
+      }
+      
+      return "General";
+    }
+
+    function simulateScan(name, vpa, mcc, amount) {
+      document.getElementById('merchantName').innerHTML = `${name} <i class="fa-solid fa-circle-check text-blue-500 text-xs"></i>`;
+      document.getElementById('merchantVpa').innerText = `VPA: ${vpa}`;
+      document.getElementById('merchantAvatar').innerText = name.charAt(0);
+      document.getElementById('payAmountInput').value = amount;
+
+      selectedCheckoutCat = determineCategoryByMCC(mcc, vpa);
+
+      switchView('checkout');
+    }
+
+    function switchUser(userId) {
+      currentUser = userId;
+      document.getElementById('userNameDisplay').innerText = userData[currentUser].name;
+      renderHub();
+      renderCheckoutPills();
+    }
+
+    function switchView(view) {
+      document.getElementById('viewHub').style.display = (view === 'hub') ? 'flex' : 'none';
+      document.getElementById('viewCheckout').style.display = (view === 'checkout') ? 'flex' : 'none';
+
+      document.getElementById('tabHub').className = (view === 'hub') ? 'bg-blue-600 px-3 py-1 rounded-lg font-semibold' : 'bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded-lg font-semibold';
+      document.getElementById('tabCheckout').className = (view === 'checkout') ? 'bg-blue-600 px-3 py-1 rounded-lg font-semibold' : 'bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded-lg font-semibold';
+
+      renderHub();
+      renderCheckoutPills();
+    }
+
+    function setHubMode(mode) {
+      hubMode = mode;
+      document.getElementById('modeBtnAlloc').className = (mode === 'allocation') ? "flex-1 py-1.5 rounded-lg bg-white text-blue-600 shadow-sm transition" : "flex-1 py-1.5 rounded-lg text-slate-600 transition";
+      document.getElementById('modeBtnAnalysis').className = (mode === 'analysis') ? "flex-1 py-1.5 rounded-lg bg-white text-blue-600 shadow-sm transition" : "flex-1 py-1.5 rounded-lg text-slate-600 transition";
+      renderHub();
+    }
+
+    function changeCycle(val) {
+      currentCycle = val;
+      renderHub();
+    }
+
+    function renderHub() {
+      const container = document.getElementById('hubListContainer');
+      container.innerHTML = '';
+      const userCats = userData[currentUser].categories;
+
+      if (hubMode === 'allocation') {
+        let html = `<div class="text-[11px] font-bold text-slate-400 uppercase my-2">Set ${currentCycle} Budget Limits</div>`;
+        
+        for (let key in userCats) {
+          const item = userCats[key];
+          html += `
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 mb-2 flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xl">${item.icon}</span>
+                <div>
+                  <p class="text-xs font-bold text-slate-800">${key}</p>
+                  <p class="text-[10px] text-slate-400">Spent: ₹${item.spent.toLocaleString('en-IN')}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-2 py-1 shadow-sm">
+                <span class="text-xs text-slate-400 font-bold">₹</span>
+                <input type="number" min="0" value="${item.alloc}" oninput="updateCategoryAlloc('${key}', this.value)" class="w-16 text-xs font-bold text-slate-800 text-right focus:outline-none" />
+              </div>
+            </div>
+          `;
+        }
+        container.innerHTML = html;
+
+      } else {
+        let totalAlloc = 0, totalSpent = 0;
+        for (let key in userCats) {
+          totalAlloc += userCats[key].alloc;
+          totalSpent += userCats[key].spent;
+        }
+
+        let html = `
+          <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-3.5 text-white mb-3 shadow-md">
+            <div class="text-[11px] text-blue-100 uppercase tracking-wider font-semibold">${currentCycle} Total Overview</div>
+            <div class="text-2xl font-black mt-0.5">₹${(totalAlloc - totalSpent).toLocaleString('en-IN')} <span class="text-xs font-normal text-blue-200">left</span></div>
+            <div class="flex justify-between items-center mt-2 pt-2 border-t border-blue-400/30 text-[11px]">
+              <span>Allocated: <strong>₹${totalAlloc.toLocaleString('en-IN')}</strong></span>
+              <span>Spent: <strong>₹${totalSpent.toLocaleString('en-IN')}</strong></span>
+            </div>
+          </div>
+
+          <div class="text-[11px] font-bold text-slate-400 uppercase my-2">Category Breakdown</div>
+        `;
+
+        for (let key in userCats) {
+          const item = userCats[key];
+          const left = item.alloc - item.spent;
+          const percentSpent = item.alloc > 0 ? Math.min(100, Math.round((item.spent / item.alloc) * 100)) : 0;
+
+          html += `
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 mb-2">
+              <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">${item.icon}</span>
+                  <span class="text-xs font-bold text-slate-800">${key}</span>
+                </div>
+                <span class="text-xs font-extrabold ${left < 0 ? 'text-red-500' : 'text-slate-800'}">₹${left.toLocaleString('en-IN')} <span class="text-[10px] text-slate-400 font-normal">left</span></span>
+              </div>
+
+              <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div class="${left < 0 ? 'bg-red-500' : 'bg-blue-600'} h-full transition-all" style="width: ${percentSpent}%"></div>
+              </div>
+
+              <div class="flex justify-between text-[10px] text-slate-500 font-medium mt-1">
+                <span>Budget: <strong class="text-slate-700">₹${item.alloc.toLocaleString('en-IN')}</strong></span>
+                <span>Spent: <strong class="text-slate-700">₹${item.spent.toLocaleString('en-IN')}</strong></span>
+                <span>Left: <strong class="${left < 0 ? 'text-red-600' : 'text-emerald-600'}">₹${left.toLocaleString('en-IN')}</strong></span>
+              </div>
+            </div>
+          `;
+        }
+
+        container.innerHTML = html;
+      }
+    }
+
+    function updateCategoryAlloc(key, value) {
+      const val = parseFloat(value);
+      userData[currentUser].categories[key].alloc = isNaN(val) ? 0 : val;
+    }
+
+    function renderCheckoutPills() {
+      const container = document.getElementById('checkoutPillContainer');
+      container.innerHTML = '';
+      const userCats = userData[currentUser].categories;
+
+      for (let key in userCats) {
+        const item = userCats[key];
+        const left = item.alloc - item.spent;
+        const isSelected = (key === selectedCheckoutCat);
+
+        const btn = document.createElement('button');
+        btn.className = `category-btn flex-shrink-0 w-24 py-2 px-2 rounded-2xl border ${isSelected ? 'border-2 border-blue-600 bg-blue-50 text-blue-700 shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-600'} flex flex-col items-center transition-all`;
+        
+        btn.onclick = () => {
+          selectedCheckoutCat = key;
+          renderCheckoutPills();
+        };
+
+        btn.innerHTML = `
+          <span class="text-lg">${item.icon}</span>
+          <span class="text-[11px] font-bold mt-0.5 text-center leading-tight">${key}</span>
+          <span class="text-[9px] ${isSelected ? 'font-bold text-blue-600' : 'text-slate-400'} font-mono mt-0.5">₹${left.toLocaleString('en-IN')} left</span>
+        `;
+        container.appendChild(btn);
+      }
+    }
+
+    function executePayment() {
+      const payAmount = parseFloat(document.getElementById('payAmountInput').value) || 0;
+      const payNote = document.getElementById('payNoteInput').value.trim();
+
+      if (payAmount <= 0) {
+        alert("Please enter a valid amount.");
+        return;
+      }
+
+      userData[currentUser].categories[selectedCheckoutCat].spent += payAmount;
+
+      alert(`Payment Successful!\n\nUser: ${userData[currentUser].name}\nAmount: ₹${payAmount}\nCategory: ${selectedCheckoutCat}${payNote ? '\nNote: ' + payNote : ''}`);
+
+      document.getElementById('payNoteInput').value = '';
+      hubMode = 'analysis';
+      switchView('hub');
+    }
+
+    // Initial Execution
+    renderHub();
+  </script>
+</body>
+</html>
